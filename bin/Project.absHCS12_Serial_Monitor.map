@@ -27,7 +27,7 @@ SECTION-ALLOCATION SECTION
 Section Name                    Size  Type     From       To       Segment
 ---------------------------------------------------------------------------------------------
 .init                             16     R     0xC000     0xC00F   ROM_C000
-.text                             55     R     0xC010     0xC046   ROM_C000
+.text                             60     R     0xC010     0xC04B   ROM_C000
 .stack                           256   R/W     0x1000     0x10FF   RAM
 .abs_section_8                     1   N/I        0x8        0x8   .absSeg0
 .abs_section_9                     1   N/I        0x9        0x9   .absSeg1
@@ -374,7 +374,7 @@ Section Name                    Size  Type     From       To       Segment
 .vectSeg342_vect                   2     R     0xFFFE     0xFFFF   .vectSeg342
 
 Summary of section sizes per section type:
-READ_ONLY (R):          4B (dec:       75)
+READ_ONLY (R):          50 (dec:       80)
 READ_WRITE (R/W):      100 (dec:      256)
 NO_INIT (N/I):         190 (dec:      400)
 
@@ -746,7 +746,8 @@ MODULE:                 -- serial.c.o --
 - PROCEDURES:
      InitPorts                                 C018       E      14       1   .text       
      InitSCI                                   C026      10      16       1   .text       
-     SCI0_ISR                                  C036      11      17       1   .text       
+     Sniff                                     C036       5       5       1   .text       
+     SCI0_ISR                                  C03B      11      17       1   .text       
 - VARIABLES:
      _Vector_20                                FFD6       2       2       0   .abs_section_ffd6
 
@@ -757,14 +758,14 @@ MODULE STATISTIC
   mc9s12dg256.c.o                            400      0      0
   main.c.o                                     0      8      0
   Start12.c.o                                  0     16      0
-  serial.c.o                                   0     47      2
+  serial.c.o                                   0     52      2
   other                                      256      2      0
 
 *********************************************************************************************
 SECTION USE IN OBJECT-ALLOCATION SECTION
 ---------------------------------------------------------------------------------------------
 SECTION: ".text"
-  main InitPorts InitSCI SCI0_ISR 
+  main InitPorts InitSCI Sniff SCI0_ISR 
 SECTION: ".init"
   _Startup 
 SECTION: ".abs_section_8"
@@ -1801,7 +1802,8 @@ OBJECT LIST SORTED BY ADDRESS
      main                                      C010       8       8       1   .text       
      InitPorts                                 C018       E      14       1   .text       
      InitSCI                                   C026      10      16       1   .text       
-     SCI0_ISR                                  C036      11      17       1   .text       
+     Sniff                                     C036       5       5       1   .text       
+     SCI0_ISR                                  C03B      11      17       1   .text       
      _Vector_20                                FFD6       2       2       0   .abs_section_ffd6
 
 *********************************************************************************************
@@ -1819,7 +1821,8 @@ _Startup                  USES __SEG_END_SSTACK main
 main                      USES InitPorts InitSCI 
 InitPorts                 USES _PORTAB _PTJ _DDRAB _DDRJ 
 InitSCI                   USES _SCI0BD _SCI0CR1 _SCI0CR2 
-SCI0_ISR                  USES _SCI0SR1 _SCI0DRL _PORTAB 
+Sniff                     USES _PORTAB 
+SCI0_ISR                  USES _SCI0SR1 _SCI0DRL Sniff _PORTAB 
 _Vector_20                USES SCI0_ISR 
 
 *********************************************************************************************
@@ -1840,7 +1843,9 @@ DEPENDENCY TREE
  _Vector_20          
  | 
  +- SCI0_ISR            
-      
+    | 
+    +- Sniff               
+         
 *********************************************************************************************
 STATISTIC SECTION
 ---------------------------------------------------------------------------------------------
@@ -1848,5 +1853,5 @@ STATISTIC SECTION
 ExeFile:
 --------
 Number of blocks to be downloaded: 3
-Total size of all blocks to be downloaded: 75
+Total size of all blocks to be downloaded: 80
 
