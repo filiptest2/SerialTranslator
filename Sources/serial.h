@@ -45,4 +45,4 @@ void FIFOInit(void);
 short FIFOPut(const INT8U data);  //const makes sure data is not modified within a function          
 short FIFOGet(INT8U *dataPtr);
 
-#endif
+#endif  //_SERIAL_H

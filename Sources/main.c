@@ -4,13 +4,9 @@
 #include "serial.h"
 
 
-
 void main(void) 
 {
-  
-  InitPorts();
-  InitSCI();
-  FIFOInit();
+  //run initialization  
   Init();      
     
   for(;;) {
