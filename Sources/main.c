@@ -9,6 +9,7 @@ void main(void)
 {
     InitPorts();
     InitSCI();
+    FIFOInit();
 
   for(;;) {
   
