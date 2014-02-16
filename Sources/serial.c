@@ -1,5 +1,17 @@
 #include "serial.h"
 
+const INT8U STX = 0x02;
+const INT8U ETX = 0x03;
+
+static TPacket SCI0Packet;
+
+void Init(void)
+{
+  SCI0Packet.state = WaitForSTX;
+  SCI0Packet.port = &PORTB;
+  _asm cli;
+}
+
 void InitPorts(void)
 {
   PORTB = 0x00;
@@ -13,13 +25,11 @@ void InitSCI(void)
   SCI0BDH = 0x00;
   SCI0BDL = 0x1A;  //must use 1A, in run mode Fosc = 8 MHz, i.e. now BR = 9600
   SCI0CR1 = 0x00;
-  SCI0CR2 = 0x2C; //receive interrupt enabled
-  _asm cli;
+  SCI0CR2 = 0x2C; //receive interrupt enabled      
 }
 
 void FIFOInit(void) 
-{ 
-  //extern INT8U savedCCR;  
+{   
   INT8U savedCCR;
   StartCritical();
   PUTPT = GETPT = &Fifo[0];     
@@ -65,19 +75,59 @@ short FIFOGet (INT8U *dataPtr)
   }
 }
 
-void Sniff(INT8U byt)
+INT8S ConvertHexToASCII(INT8U letter)
 {  
-  PORTB = byt;  
+  return (letter |= 0x30);
+}
+
+
+void Sniff(const INT8U byt,TPacket *const packet)
+{
+  INT8 digit;
+  switch((*packet).state) 
+  {
+    case WaitForSTX:
+    if(byt == STX);
+    (*packet).state = WaitForMSB;
+    break;
+    
+    case WaitForMSB:
+    digit = ConvertHexToASCII(byt);
+    if(digit>= 0)
+      {
+        (*packet).data = digit <<4;
+        (*packet).state = WaitForLSB;
+      } 
+    else 
+      (*packet).state = WaitForSTX; //error, restart
+    break;
+    
+    case WaitForLSB:
+    digit = ConvertHexToASCII(byt);     
+    if(digit>= 0)
+      {
+        (*packet).data |= digit;
+        (*packet).state = WaitForETX;
+      } 
+    else
+      (*packet).state = WaitForSTX; //error, restart
+    break;
+    
+    case WaitForETX:
+    if(byt == ETX)    
+      *((*packet).port) = (*packet).data;
+    (*packet).state = WaitForSTX;      
+    break;        
+  }
 }
 
 void interrupt 20 SCI0_ISR(void)
 {  
   if (SCI0SR1_RDRF && SCI0CR2_RIE)
   {    
-    if (FIFOPut(SCI0DRL)) //if there is space in buffer
-      {
-        SCI0CR2_SCTIE = 1;  //arm transmit interrupt, new data available        
-      }
+    Sniff(SCI0DRL,&SCI0Packet);
+    if(FIFOPut(SCI0DRL)) //if there is space in buffer      
+        SCI0CR2_SCTIE = 1;  //arm transmit interrupt, new data available              
   }
   
   if (SCI0SR1_TDRE && SCI0CR2_SCTIE) 

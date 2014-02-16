@@ -7,10 +7,12 @@
 
 void main(void) 
 {
-    InitPorts();
-    InitSCI();
-    FIFOInit();
-
+  
+  InitPorts();
+  InitSCI();
+  FIFOInit();
+  Init();      
+    
   for(;;) {
   
   } /* loop forever */  
